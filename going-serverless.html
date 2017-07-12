@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Going Serverless with Flask</title>
+    <meta charset="utf-8">
+    <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="distrochart.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="distrochart.css" type="text/css">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      body { font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif; }
+      h1, h2, h3, h4, h5 {
+         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+         font-weight: normal;
+         color: rgb(255,102,0);
+      }
+
+      .remark-slide h1 {
+         font-size: 3em;
+      }
+      .remark-slide h2 {
+         font-size: 2em;
+      }
+
+      .authorblock .affiliation:before {
+         content: "◦";
+         margin-left: 0.45em;
+         margin-right: 0.5em;
+      }
+      .authorblock .email:before {
+         content: "◦";
+         margin-left: 0.45em;
+         margin-right: 0.5em;
+      }
+      .authorblock .handle:before {
+         content: "◦";
+         margin-left: 0.45em;
+         margin-right: 0.5em;
+      }
+
+      .takeaway .authorblock {
+         font-size: 1em;
+      }
+
+footer {
+   position: absolute;
+   bottom: 12px;
+   left: 20px;
+   width: 100%;
+}
+
+footer img.logo {
+   float: right;
+   height: 50px;
+   margin-right: 50px;
+}
+
+.remark-slide-content {
+   padding-left: 3em;
+   padding-right: 3em;
+}
+.remark-slide-content > * {
+   font-size: 1.5em;
+}
+.remark-slide-content > ul li {
+   margin-bottom: 1em;
+}
+.remark-slide-content .compact ul, .remark-slide-content .compact p {
+   margin-top: 0px;
+   margin-bottom: 10px;
+}
+.remark-slide-content .compact ul {
+   margin-left: -0.25em;
+}
+.remark-slide-content .compact ul li {
+   margin-bottom: 0.25em;
+   font-size: 0.875em;
+}
+
+.remark-slide-number {
+   right: auto;
+   left: 20px;
+}
+
+.remark-slide .abstract h1 {
+   text-align: center;
+}
+
+.remark-slide .abstract p {
+   font-size: 1.5em;
+   font-weight: 100;
+   text-align: justify;
+}
+
+.figure img {
+   display: block;
+   margin-left: auto;
+   margin-right: auto;
+}
+
+li > ul {
+   margin-top: 0.5em;
+}
+
+.split {
+   display: flex;
+   flex-direction: row;
+   align-items: top;
+}
+
+#compare {
+   float: right;
+}
+
+.w50 {
+   width: 50%;
+}
+
+.w60 {
+   width: 60%;
+}
+.w80 {
+   width: 80%;
+}
+
+.footer {
+   bottom: 10px;
+   left: 20px;
+}
+
+.note {
+   font-size: 0.675em;
+}
+
+.note::before {
+   content: "Note: ";
+   font-weight: 600;
+}
+
+.small {
+   font-size: 0.5em;
+}
+
+.fullimage {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   justify-content: center;
+   height: 100%;
+}
+.fullimage img {
+   width: 90%;
+}
+
+.thanks {
+   font-size: 2em;
+}
+
+.column {
+   margin-left: 1em;
+}
+
+.orange {
+   color: #ff7900;
+}
+.affiliation {
+   font-family: HelveticaNeueUltraLight, HelveticaNeue-Ultra-Light, 'Helvetica Neue Ultra Light', HelveticaNeue, 'Helvetica Neue', TeXGyreHerosRegular, Roboto, Arial, sans-serif;
+}
+
+ </style>
+  </head>
+  <body>
+<textarea id="source">
+name: orange
+layout: true
+
+<footer>
+<img class="logo" src="data:image/jpeg;base64,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">
+</footer>
+---
+
+class: title, center, middle
+
+# Going Serverless with Flask
+## Experiences with AWS Lambda and OpenWhisk
+.authorblock[
+.author[Alex Miłowski, PhD]
+.affiliation[.orange[Orange] Silicon Valley]
+]
+
+---
+
+.fullimage[![And now for something completely different](https://68.media.tumblr.com/tumblr_m7botv5oBn1qafsv7o1_500.gif)]
+---
+class: abstract
+
+# Abstract
+
+Deploying applications via serverless infrastructure may require some changes
+in architecture and assumptions. This talk will walk through
+experiences deploying Flask-based services on AWS Lambda and OpenWhisk
+with minimal changes, demo supporting libraries,
+enumerate some of the challenges, and address practical outcomes derived from the
+promises of serverless deployment.
+
+---
+
+class: normal
+
+# Enterprise data devops
+
+ Need to create an environment where:
+ * microservices provide access to resultants
+ * from big data / AI analytics
+ * to enterprise applications
+ * or consumer services
+
+---
+
+class: normal
+
+# Scale Out Infrastructure
+
+.figure[
+![Scale Out Infrastructure](scale-out.svg)
+]
+
+.compact[
+
+Can help address:
+
+* issues of peak load
+* simplifying deployment (tradeoffs?)
+* kubernetes/openwhisk enables separation of concerns
+* Apache OpenWhisk - http://openwhisk.incubator.apache.org
+
+]
+
+---
+
+# Experiment: Flask on FaaS
+
+The experiment:
+
+1. Take a reasonably complicated Flask application.
+2. Deploy on AWS Lambda or OpenWhisk
+3. Compare!
+
+What needs to change?  Does that matter?  What is the comparable performance?
+Is the tradeoff (if any) worth the scale out?
+
+---
+
+# Zappa for AWS Lambda
+
+"Serverless Python Web Services - Powered by AWS Lambda and API Gateway"
+
+https://www.zappa.io or https://github.com/Miserlou/Zappa
+
+As easy as:
+```bash
+$ pip install zappa
+$ zappa init
+$ zappa deploy
+```
+Well, not quite … but almost!
+
+---
+
+# 𝚫 - 1/2 - `blog.py`
+
+Replicating the main and packaging configuration:
+
+```python
+class Config(object):
+   DEBUG=True
+   SERVER_NAME='test.milowski.com:8080'
+   DOCS='http://...' # location of static documents
+   ...
+
+from flask import Flask
+app = Flask(__name__)
+from duckpond.apps.blog.assets import assets
+from duckpond.apps.blog.docs import docs
+from duckpond.apps.blog.views import views
+
+app.register_blueprint(assets)
+app.register_blueprint(docs)
+app.register_blueprint(views)
+```
+
+.footer.note[duckpond project @ https://github.com/alexmilowski/duckpond]
+
+---
+
+# 𝚫 - 2/2 - `production.py`
+
+Configuration from objects:
+
+```python
+from blog import Config,app
+
+class ProductionConfig(Config):
+   DEBUG=False
+   SERVER_NAME='app.milowski.com:8080'
+
+app.config.from_object('production.ProductionConfig')
+
+if __name__ == '__main__':
+    app.run()
+```
+
+.footer.note[You can run this directly for local testing or use via FaaS.]
+---
+
+class: separator center middle
+
+# Demo Time
+## Zappa for AWS
+
+---
+
+# Flask on OpenWhisk?
+
+ * Zappa doesn't support OpenWhisk … (possible)
+ * What is needed:
+    * a library that bridges the FaaS layer to the WSGI
+    * packaging specific to the FaaS environment
+    * deployment orchestration
+ * How hard is that? 😬
+
+---
+
+# So I wrote my own …
+
+https://github.com/alexmilowski/flask-openwhisk
+
+A bridge: OpenWhisk ↔︎ WSGI request / response
+
+Seemless but you need a `__main__.py`:
+
+```python
+from flaskwsk.handle import invoke
+from web import app
+
+def main(args):
+   return invoke(app,args)
+```
+
+Only addresses the need for a library!
+
+---
+
+# Packaging for OpenWhisk
+
+* functions run in Docker containers
+* "warmed" by initializing with the code
+* zipped into an archive with dependencies via `virtualenv`
+* python container expects:
+```
+__main__.py
+...
+virtualenv/...
+```
+
+---
+
+class: separator center middle
+
+# Demo Time
+## flaskwsk for OpenWhisk / IBM bluemix
+
+
+---
+
+# Results
+
+.split[
+<div class="chart-wrapper" id="compare"></div>
+.compact[
+* *Lambda* vs *nginx / gunicorn* via **AWS**:
+
+   * ~ 1.6x slower
+   * larger variance
+   * shared db / resources
+   * random high values
+* *OpenWhisk* via **IBM Bluemix**:
+
+   * high values for cold containers
+   * performs well with remote database
+
+* *OpenWhisk* is open source so … we can contribute!
+]
+]
+.footer.note.small[Looks scrambled? Reload! Life is too short to wonder why C3/D3/SVG does this kind of thing. C'est la vie!]
+
+---
+
+class: takeaway
+
+# Takeaway
+
+
+.split[
+.column[
+Key conclusions:
+.compact[
+* increased latency
+* tradeoff for scale out
+* no changes possible
+]
+]
+
+.column[
+Followup research:
+.compact[
+* scale out interactions via kubernetes
+* container warming
+* WSGI optimization
+]
+]
+]
+
+
+.thanks[Thank you!]
+
+.authorblock[
+.author[Alex Miłowski, PhD]
+.email[alex@milowski.com]
+.email[alex.milowski@orange.com]
+]
+.authorblock[@alexmilowski
+]
+
+</textarea>
+    <script type="text/javascript">
+      var slideshow = remark.create();
+    </script>
+    <script type="text/javascript">
+    var lambda = [
+    1.071,
+    0.491,
+    0.575,
+    0.587,
+    0.536,
+    0.541,
+    0.451,
+    0.972,
+    0.482,
+    0.559,
+    1.008,
+    0.669,
+    0.649,
+    0.476,
+    0.610,
+    0.531,
+    0.497,
+    0.497,
+    0.531,
+    0.841
+];
+
+    var native = [
+    0.456,
+    0.341,
+    0.343,
+    0.345,
+    0.337,
+    0.354,
+    0.338,
+    0.339,
+    0.381,
+    0.339,
+    0.343,
+    0.340,
+    0.338,
+    0.344,
+    0.334,
+    0.479,
+    0.336,
+    0.342,
+    0.344,
+    0.460
+];
+    var data = [];
+    for (var i=0; i<20; i++) {
+       data.push({'name' : 'Lambda', 'value' : lambda[i]});
+       data.push({'name' : 'nginx / gunicorn', 'value' : native[i]});
+    }
+    console.log(data);
+    chart1 = makeDistroChart({
+                data:data,
+                xName:'name',
+                yName:'value',
+                axisLabels: {xAxis: null, yAxis: 'Time (s)'},
+                selector:"#compare",
+                chartSize:{height:640, width:480},
+                constrainExtremes:true,
+                range: [0.25,1.1]});
+            chart1.renderBoxPlot();
+            chart1.renderDataPlots();
+            chart1.renderNotchBoxes({showNotchBox:false});
+            chart1.renderViolinPlot({showViolinPlot:false});
+            //chart1.dataPlots.show({showPlot:true, plotType:'beeswarm',showBeanLines:false, colors:null});
+            //chart1.yScale.domain([0,1.25]);
+            //chart1.objs.yAxis.scale(chart1.yScale);
+            //chart1.update()
+            //chart1.objs.g.select('.y.axis').call(chart1.objs.yAxis)
+      </script>
+  </body>
+</html>
