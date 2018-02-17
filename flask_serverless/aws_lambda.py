@@ -72,8 +72,10 @@ def aws_invoke(app,gateway_input,server_name='localhost',server_port='5000',http
       'statusCode' : response.status_code,
    }
 
+   compressed = response.headers.get('Content-Encoding')=='gzip'
+
    responseType = parse_options_header(response.headers.get('Content-Type','application/octet-stream'))
-   if 'charset' in responseType[1] or responseType[0] in textTypes or responseType[0][0:responseType[0].find('/')]=='text':
+   if not compressed and ('charset' in responseType[1] or responseType[0] in textTypes or responseType[0][0:5]=='text/'):
       gateway_output['body'] = response.data.decode(responseType[1].get('charset','utf-8'))
       gateway_output['isBase64Encoded'] = False
    else:
