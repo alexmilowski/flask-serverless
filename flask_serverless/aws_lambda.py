@@ -50,7 +50,8 @@ def aws_invoke(app,gateway_input,server_name='localhost',server_port='5000',http
       'wsgi.errors': sys.stderr,
       'wsgi.multiprocess': True,
       'wsgi.multithread': False,
-      'wsgi.run_once': True
+      'wsgi.run_once': True,
+      'HTTP_X_AWS_PATH' : requestContext['path']
    }
 
    if environ['REQUEST_METHOD']=='POST' or environ['REQUEST_METHOD']=='PUT':
