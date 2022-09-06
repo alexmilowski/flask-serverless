@@ -1,20 +1,20 @@
+import sys
+import json
+
 from flask import Flask,request,jsonify
 from werkzeug.http import parse_options_header
 from flask_serverless import aws_invoke
-import json
 
-app = Flask(__name__)
+api = Flask(__name__)
 
 class Config(object):
    DEBUG=True
 
-app.config.from_object('test_aws.Config')
-
-@app.route('/')
+@api.route('/')
 def index():
    return 'Hello!'
 
-@app.route('/echo',methods=['GET','HEAD','POST','PUT','DELETE','OPTIONS'])
+@api.route('/echo',methods=['GET','HEAD','POST','PUT','DELETE','OPTIONS'])
 def echo():
    obj = {
      'method' : request.method,
@@ -27,10 +27,10 @@ def echo():
    return jsonify(obj)
 
 def lambda_handler(event, context):
-   return aws_invoke(app,event)
+   return aws_invoke(api,event)
 
-if __name__ == '__main__':
-   event = '''
+
+default_event = '''
 {
 "resource": "/echo",
 "path": "/echo",
@@ -70,4 +70,13 @@ if __name__ == '__main__':
 "isBase64Encoded": false
 }
 '''
-   print(json.dumps(lambda_handler(json.loads(event),None)))
+
+def main():
+   if len(sys.argv)>1:
+      for file in sys.argv[1:]:
+         with open(file,'r') as input:
+            event = json.load(input)
+            print(json.dumps(lambda_handler(event,None),indent=2))
+   else:
+      event = json.loads(default_event)
+      print(json.dumps(lambda_handler(event,None),indent=2))
