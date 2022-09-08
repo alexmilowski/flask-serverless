@@ -3,7 +3,7 @@ import json
 
 from flask import Flask,request,jsonify
 from werkzeug.http import parse_options_header
-from flask_serverless import aws_invoke
+from flask_serverless import aws_invoke, gcp_invoke
 
 api = Flask(__name__)
 
@@ -18,13 +18,22 @@ def index():
 def echo():
    obj = {
      'method' : request.method,
-     'headers' : dict(request.headers)
+     'headers' : dict(request.headers),
+     'full_path' : request.full_path,
+     'args' : request.args
    }
+
    if request.method=='POST' or request.method=='PUT':
       contentType = parse_options_header(request.headers.get('Content-Type','application/octet-stream'))
       encoding = contentType[1].get('charset','utf-8')
-      obj['data'] = request.data.decode(encoding)
+      data = request.stream.read()
+      obj['data'] = data.decode(encoding)
    return jsonify(obj)
+
+@api.route('/gcp/echo',methods=['GET','HEAD','POST','PUT','DELETE','OPTIONS'])
+def gcp_echo():
+   request.full_path = '/' + request.full_path[5:]
+   return gcp_invoke(api,request)
 
 def lambda_handler(event, context):
    return aws_invoke(api,event)
@@ -73,10 +82,14 @@ default_event = '''
 
 def main():
    if len(sys.argv)>1:
-      for file in sys.argv[1:]:
-         with open(file,'r') as input:
-            event = json.load(input)
-            print(json.dumps(lambda_handler(event,None),indent=2))
+      if sys.argv[1]=='aws':
+         for file in sys.argv[2:]:
+            with open(file,'r') as input:
+               event = json.load(input)
+               print(json.dumps(lambda_handler(event,None),indent=2))
+      elif sys.argv[1]=='run':
+         api.run()
+
    else:
       event = json.loads(default_event)
       print(json.dumps(lambda_handler(event,None),indent=2))
